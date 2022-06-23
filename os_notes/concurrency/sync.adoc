@@ -1,0 +1,22 @@
+= Synchronization
+
+== Spin Lock
+
+* Basic solution
+** using 1 shared variable
+
+* Peterson's solution
+** using 2 shared variable
+
+* More
+
+== Sleep Lock
+
+* one binary semaphore and two counting semaphores
+** Semaphore:: an integer and a wait-list?
+
+=== Producer-Consumer Problem
+
+=== Dining Philosopher Problem
+
+=== Reader Writer Problem

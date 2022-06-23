@@ -1,0 +1,11 @@
+
+[graphviz]
+----
+digraph G {
+    rankdir="LR"
+
+    "virtual address" -> "TLB"
+    "TLB" -> "physical address" [label="TLB hit"]
+    "TLB" -> "page table" [label="TLB miss"]
+}
+----

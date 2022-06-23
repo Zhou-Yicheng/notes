@@ -1,0 +1,30 @@
+= Common Concurrency Problems
+
+[CAUTION]
+.CRUX: HOW TO HANDLE COMMON CONCURRENCY BUGS
+====
+Concurrency bugs tend to come in a variety of common patterns.
+Knowing which ones to look out for is the first step to writing more robust, correct concurrent code.
+====
+
+== Non-Deadlock Bugs
+
+== Deadlock Bugs
+
+[CAUTION]
+.CRUX: HOW TO DEAL WITH DEADLOCK
+====
+How should we build systems to prevent, avoid, or at least detect and recover from deadlock?
+Is this a real problem in systems today?
+====
+
+=== Prevention
+
+* Circular Wait
+* Hold-and-wait
+* No Preemption
+* Mutual Exclusion
+
+=== Avoidance
+
+=== Detect and Recover

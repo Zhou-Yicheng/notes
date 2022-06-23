@@ -1,0 +1,11 @@
+= Condition Variables
+
+[CAUTION]
+.THE CRUX : HOW TO WAIT FOR A CONDITION
+====
+In multi-threaded programs, it is often useful for a thread to wait for some condition to become true before proceeding.
+The simple approach, of just spinning until the condition becomes true, is grossly inefficient and wastes CPU cycles, and in some cases, can be incorrect.
+Thus, how should a thread wait for a condition?
+====
+
+condition variable:: a queue of threads with a mutex

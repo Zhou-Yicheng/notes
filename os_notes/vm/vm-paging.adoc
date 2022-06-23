@@ -1,0 +1,14 @@
+= Paging: Introduction
+
+
+
+.Questions
+* Where are page tables stored?
+** assume that the page tables live in physical memory
+* What's actually in the page table?
+** *page table entry (PTE)*
+** PFN
+* Dose paging make the system too slow?
+** ?
+
+== TODO

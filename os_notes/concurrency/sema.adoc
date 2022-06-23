@@ -1,0 +1,21 @@
+= Semaphores
+
+[,c]
+----
+#include <semaphore.h>
+sem_t s;
+sem_init(&s, 0, 10);
+
+int sem_wait(sem_t *s) {
+    s->val--
+    if (s->val < 0)
+        sleep()
+}
+
+int sem_post(sem_t *s) {
+    s->val++
+    if (s->val <= 0)
+        waekup()
+}
+----
+

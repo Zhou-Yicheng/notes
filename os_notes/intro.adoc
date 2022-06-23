@@ -1,0 +1,26 @@
+= Introduction to Operating Systems
+
+OS takes a *physical* resource and transforms it into a more general, powerful, and easy-to-use *virtual* form.
+
+.Three roles of the OS
+* Virtual machine
+* Standard library
+* Resource manager
+
+== Virtualizing CPU
+
+* OS creates a *illusion* that each process runs on its private own processor by time sharing the CPU.
+
+== Virtualizing Memory
+
+* OS creates a *virtual address space* for each process by sharing the physical memory.
+
+== Concurrency
+
+* Concurrency allows OS to make lots of decision at the same time.
+* Concurrency allows programs to run more than one function concurrently.
+
+== Persistence
+
+* OS stores data on the hardware persistently in the form of *files*.
+* Files are managed on the storage device by *file system*.

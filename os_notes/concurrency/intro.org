@@ -1,0 +1,31 @@
+
+* Concurrency: An Introduction
+
+- virtual CPUs :: illusion of multiple programs running at the same time
+
+- virtual memory :: illusion of a large, private memory for each process
+
+- address space :: as if each program has its own memory
+
+- state of a thread :: PC, registers, TCBs
+
+** Major Differences
+
+1. no need to flush TLB and switch page table when *context switch*
+
+2. There are multiple stacks in a multi-threaded process
+
+** Why Use Threads?
+
+1. *parallelism*
+2. avoid blocking program progress
+
+** Key Terms
+   
+- critical section :: a piece of code that accesses a /shared/ resource
+- race condition :: multiple threads of execution enter the critical section, both attempt
+  to update the shared data structure
+- indeterminate :: one or more race conditions cause the outcome is not *deterministic*
+- mutal execution :: only a single thread ever enters a critical section, resulting in
+  deterministic program outputs.
+  

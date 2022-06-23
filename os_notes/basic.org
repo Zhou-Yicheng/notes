@@ -1,0 +1,44 @@
+* OS Basics
+
+operates correctly and efficiently in an easy-to-use manner
+
+** Roles
+
++ Virtual Machine (VM)
++ Standard Library (STL)
++ Resource Manager (RM)
+
+** Design Goals
+
++ Abstraction
++ Performance
++ Protection
++ Reliability
++ Efficiency, Security, Mobility
+
+** Design Principles
+
+In many operating systems, a common design paradigm is to separate
+high-level policies from their low-level mechanisms
+Separating the two allows one easily to change policies without
+having to rethink the mechanism and is thus a form of *modularity*
+
++ Policy :: which software could access which resource
+
++ Mechanism :: how is the policy enforced
+
+** Services provided by OS
+
+- Interface :: CLI or GUI or Batch
+- Execution :: Load and run program
+- Operation :: Disk I/O or Network I/O
+- Accounting :: Keep track of resources used
+- Manipulation :: The file-system manipulation
+- Communication :: Shared memory or pipe or network
+- ErrorDetection :: Detect and handle error correctly
+- ResourceAllocation :: CPU, memory, disk and other I/O devices
+- Protection&Security :: Resources security, authentication, and precautions
+
+** System Programs
+
+pass

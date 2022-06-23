@@ -1,0 +1,16 @@
+
+.Two types of memory
+stack memory::
+* allocated and deallocated _implicitly_ by compiler
+* automatically managed
+heap memory::
+* allocated and deallocated _explicitly_ by programmer
+
+.Commons errors
+* Forgetting to allocate memory
+* Not allocating enough enough
+* Forgetting to initialize allocated memory
+* Forget to free memory
+* *Dangling pointer:* use after free
+* *Double free:* free memory repeatedly
+* Calling `free()` incorrectly

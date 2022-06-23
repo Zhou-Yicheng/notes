@@ -1,0 +1,516 @@
+* Operating System
+
+- Virtual Machine :: transforms *physical* resource into *virtual* resource
+- Standard Library :: exports a few hundred *system calls* to applications
+- Resource Manager :: manage CPU, memory and disk resource efficiently and fairly
+
+** Virtualization
+
+
+*** Process
+
+- Process :: a program in execution
+
+**** Process State
+- Memory :: address space
+- Register :: PC, sp, fp
+- I/O :: open files
+
+**** Life Cycle
+
+interrupt: running -> ready
+
+block or wait: running -> waiting
+
+exit: running -> terminated
+
+**** System Call
+
+Parameter Passing
+- Registers: x86 and riscv
+- Blocks: memory block
+- Stack: which stack?
+----
+
+**** fork()
+
+**** exec()
+
+**** wait()
+
+**** Process Control Block (PCB)
+
+- Process state (life cycle state)
+- CPU registers 
+- CPU scheduling information
+- Memory management information
+- Accounting information
+- I/O status information
+
+**** Queues
+
+- Ready Queue
+- Device Queue (wait queue)
+
+**** How to regain control of the CPU
+
+A Cooperative Approach: Wait For System Call
+
+A Non-Cooperative Approach: The OS Takes Control
+
+**** Context Switch
+
+Switching from running Process A to Process B
+
+1. the hardware saves its registers (onto its kernel stack) and enters the kernel
+2. the CPU scheduler tells OS to switch
+3. saves current register values (into the PCB of A),
+    and restores the registers of B (from its PCB)
+4. changes the stack pointer to B's kernel stack and restores B’s registers
+
+**** The first process
+
+init
+
+- PID = 1
+- /sbin/init
+- using fork() and exec() to create processes
+
+**** Re-parent
+
+The "init" process will become the new parent of all orphans
+
+**** Process Time
+
+- User time :: CPU time spent in user-space memory
+- System time :: CPU time spent in kernel-space memory
+
+*** CPU Scheduling
+
+CPU scheduler decides which process to run *next*
+
+CPU密集型和IO密集型
+
++ CPU burst :: a /cycle/ of CPU execution and I/O wait
+
+**** Criteria
+
+- Turnaround time :: completion time - arrival time
+- Response time :: the first scheduled time - arrival time
+- Waiting time :: the accumulated time in the ready queue
+- Fairness :: prevent starvation
+
+**** Shortest-Job-First
+
+Non-preemptive or not?
+Preemptive scheduling algorithms have more context switches
+
+**** Round-Robin
+
++ quantum :: the amount of time allowed to execute
+High responsiveness
+
+**** Priority Scheduling
+
+preemptive or non-preemptive
+
+static or dynamic
+
+SJF is some kind of priority scheduling where priority is the job time
+
+solve *starvation* problem by *aging* : increase the priority as time progresses
+
+**** Multi-Level Feedback Queue (Multiple Queue Priority)
+
+MLFQ use the /history/ of the job to predict its /future/ behavior
+
+- Rule 1 :: If Priority(A) > Priority(B), A runs
+- Rule 2 :: If Priority(A) = Priority(B), A & B run in RR
+- Rule 3 :: When a job enters the system, it is placed at the highest priority
+- Rule 4 :: Once a job uses up its time allotment at a given level, its priority is reduced
+- Rule 5 :: After some time period S, move all the jobs in the system to the highest priority queue (boost）
+
+**** Completely Fair Scheduler (CFS)
+
+TODO
+
+*** Threads
+
+- User-level thread :: abstraction provided by thread library
+
+- Kernel-level thread :: abstraction provided by kernel
+
+- Many-to-one mapping
+  - Pros: context switch between threads is cheap (*user-space*)
+  - Cons: when one thread blocks, all thread *block*
+  
+- One-to-one mapping
+  - Pros: every thread run *independently*
+  - Cons: need to make a crossing into *kernel mode* to schedule
+   
+- Many-to-many mapping
+  - Pros: flexible
+  - Cons: difficult to implement
+    
+- POSIX thread requires threads of the same process share
+  - PID
+  - PPID
+  - process group ID and session ID
+  - user and group ID
+  - open file descriptors
+  - current directory
+  - resource limits
+  - measurements of resources
+
+*** Address space
+
+
+- Code segment :: instructions
+- Stack segment :: local variables, arguments, return values
+- Heap segment :: 
+
+Address translations requires cooperation between hardware and software 
+
+**** Base & Bounds
+
+Physical address = Virtual address + Base
+
+- Internal fragmentation
+- Cannot support larger address space
+- Hard to do inter-process sharing
+
+**** Segmentation
+
+- OS context switch must also save and restore all pairs of segment registers
+- Difficult for segment to grow
+- Management of free spaces
+- External fragmentation :: free gaps between allocated segments
+
+***** Memory Allocation Strategies
+
+- Best Fit :: return the *smallest* chunk in the free list
+- Wirst Fit :: return the *largest* chunk in the free list
+- First Fit :: return the first fit chunk in the free list
+
+**** Paging
+
+- *Fixed* size
+- *Page* mapped to page *frame*
+- Page table *per* process
+
+***** Illustration
+
+Virtual Address = Virtual Page Number | Offset
+
+Physical Address = Physical Frame Number | Offset
+
+***** Page Table Entry
+
+- Valid bit :: 0 means no mapping
+- Protection bit :: rwx
+- Present bit :: whether the page is in physical memory or swap space
+- Dirty bit :: whether the page has been modified
+- Access bit :: whether a page has been accessed
+
+***** Multi-level Page Tables
+
+using VPN as index, using cr3 as base
+
+***** Hashed Page Tables
+
+using hash function to convert VPN to index of page table and get the PFN
+
+***** Inverted Page Tables
+
+One page table
+
+Linear search for (PID, VPN) to get PFN
+
+***** SV39
+
+***** Translation Lookaside Buffer
+
+TLB is a hardware *cache* which is part of the MMU
+
+- Valid bit :: V means hit, I means miss
+
+- Spatial locality :: likely on the same page
+
+- Temporal locality :: likely to be accessed again
+
+Issues with Context Switch
+
+Either flush TLB upon context switch (set all valid bits to I) or Extending TLB with ASID (address space id)
+
+**** Demand paging
+Swap Space is a partition of disk (swap file)
+
+OS maintains a disk address of each page-sized unit
+
+***** Present Bit
+
+***** Page Fault
+
+- Present bit = 0 raise a page fault exception
+- Page fault handler
+  1. Find free page frame in physical memory
+  2. Fetch page from swap space and update PTE
+- After page fault
+  - Re-execute the instruction
+  - TLB entry loaded from PTE
+  - Set present bit to 1
+
+***** Page Replacement Policy
+
+EAT = Hit Rate * Hit Time + Miss Rate * Miss Penalty
+
+****** MIN
+
+Replace page that will not be used for the *longest* time
+
+****** FIFO
+
+****** RANDOM
+
+****** LRU
+
+approximate LRU with *use bit*
+
+set by CPU, cleared by OS
+
+******* Clock Algorithm 
+clock hand
+
+if use bit = 1: clear the use bit and move to the next page
+if use bit = 0: evict the page to swap space
+
+******* Clock Algorithm with Dirty Bit
+replace clean page 
+
+******* Additional-reference-bits Algorithm
+
+******* N^th^-chance Clock Algorithm
+
+***** Page Frame Allocation
+
+- Global allocation :: process selects frames from all page frames
+- Local allocation :: each process selects from only its own set of frames
+
+****** Equal Allocation
+Every process gets *same* amount of memory
+
+****** Proportional Allocation
+proportional to the *size* of processes
+
+****** Priority Allocation
+proportional to the *priority* of process
+
+***** Trashing
+Memory demands exceeds the available physical memory
+- Early OS
+  - Working set: the pages used actively of a process
+  - Reduce processes to fit working set into memory
+- Modern OS
+  - OOM killer
+  - Reboot
+** Concurrency
+
+*** Synchronization
+
+Threads share the same address space
+
+*** Race Condition
+
+"shared object" + "multiple processes/threads" + "concurrently"
+
+*** Mutual Exclusion
+
++ Critical Section :: the code segment access the shared object
+----
+- Requirement #1 :: Mutual Exclusion
+- Requirement #2 :: Bounded Waiting
+- Requirement #3 :: Progress (0 -> 1)
+----
+- Disabling Interrupts
+- Spin Lock
+- Semaphore
+
+*** Producer-Consumer Problem
+
+*** Dining Philosopher Problem
+
+*** Reader Writer Problem
+
+*** Deadlock
+
+- Requirement 1 :: Mutual exclusion
+- Requirement 2 :: Hold and wait
+- Requirement 3 :: No preemption (掠夺资源)
+- Requirement 4 :: Circular wait
+----
+- Allow system to enter deadlock and *recover*
+- Ensure system will *never* enter deadlock
+- Ignore the problem and pretend deadlock never occurs
+----
++ Detection Algorithm
++ Banker's Algorithm
++ Resource-Request Algorithm
+
+**** Detection Algorithm
+
+**** Banker's Algorithm
+
+**** Resource-Request Algorithm
+
+** Persistence
+
+*** I/O devices
+
+- Status register :: the status of the device
+- Command register :: command to perform certain task
+- Data register :: send or receive data
+
+**** Polling
+
+Polling frequently checks the registers of I/O devices
+
+Polling wastes CPU time waiting for slow devices to complete
+
+If CPU switches to other tasks, data may be *overwritten*
+
+**** Interrupt
+
+using *interrupt handler* to handle hardware interrupt
+
+
+**** Pooling or Interrupt?
+- Polling works better for fast devices
+- Interrupt works better for slow devices
+- Hybrid approach?
+
+**** Interrupt and Exception
+- asynchronous and synchronous
+- Interrupt mechanism also used for *exceptions*
+- Software interrupts like system call
+- Multi-core can process interrupts concurrently
+
+**** TODO Direct Memory Access (DMA)
+
+**** Device Interaction
+
+- Explicit I/O instructions
+
+- Memory-mapped I/O
+
+*** Storage
+
++ HDD (hard disk drives)
++ SSD (solid state drives)
+  
+**** Disk Scheduling: FIFO
+**** Disk Scheduling: SSTF (greedy algorithm)
+**** Disk Scheduling: SCAN
+**** Disk Scheduling: C-SCAN
+**** Disk Scheduling: LOOK
+**** Disk Scheduling: C-LOOK
+
+*** File System
+
+File System: Layer of OS that transforms *block interface* of disks
+into files, directories, etc 
+
+- Naming :: Interface to find files by name
+- DIsk Management :: collecting disk blocks into files
+- Protection :: keep data secure
+- Reliability/Durability :: keep files durable despite crashed,
+   media failures, attack, etc
+
+Block size >= sector size;
+
+**** Directory
+
+**** File
+
+- Data
+- Metadata
+  - Owner, size, last opened
+  - R, W, X
+  - Access control
+
+**** Logical Block Addressing (LBA)
+
+logical block address => physical disk address
+
+**** Contiguous allocation
+
+- Easy
+- External Fragmentation
+- Expensive to clean up fragmentation
+
+**** Linked allocation
+
+- Equal-sized blocks
+- Internal Fragmentation
+- Poor random access performance
+
+***** FAT
+
+FAT map block number to next block number
+
+a cluster is a block
+
+12 16 28
+
+****** Directory Entry
+
+****** FAT series - read sequentially
+
+****** FAT series - directory traversal
+
+****** FAT series - read a file
+
+1. read the content from cluster #32
+2. look for the next cluster
+3. jump to step 2
+
+****** FAT series - write a file
+
+1. locate the last cluster
+2. start appending to the file
+3. allocate the next cluster
+4. update the FATs and FSINFO
+5. update the file size
+   
+****** FAT series = update a file
+
+****** FAT series - delete a file
+
+1. update FIINFO and FATs
+2. change to first byte of the filename to _ (0xe5)
+
+****** Summary
+Simple to implement but poor random access performance and no security
+**** iNode allocation
+iNode table is an array of iNodes
+
+***** Ext2/3
+- Performance: spatial locality
+- Reliability: superblock and GDT are duplicated
+
+****** Directory Entry
+update the "entry length" when deleting a file
+
+****** Hard link
+point to the *same* inode
+
+****** Soft link
+A symbolic link creates a *new* inode
+
+/pathname/
+
+***** Memory Mapped Files
+
+** Security
+
+pass
+

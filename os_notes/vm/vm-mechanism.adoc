@@ -1,0 +1,66 @@
+= Mechanism: Address Translation
+
+address translation::
+transforming a virtual address into a physical address
+
+.THE CRUX: HOW TO EFFICIENTLY AND FLEXIBLY VIRTUALIZE MEMORY
+____
+How can we build an efficient virtualization of memory?
+How do we provide the flexibility needed by applications?
+How do we maintain control over which memory locations an application can access, and thus ensure that application memory accesses are properly restricted?
+How do we do all of this efficiently?
+____
+
+== Assumptions
+
+* the user's address space must be placed *contiguously* in physical memory
+* the size of address space is *less than* the size of physical memory
+* each address space is exactly the *same size*
+
+== Dynamic (Hardware-based) Relocation
+
+> physical address = base + virtual address
+
+address translation::
+transform a virtual address into a physical address
+
+[frame=none]
+.Dynamic Relocation: Hardware Requirements
+|===
+|Hardware Requirements|Notes
+
+|Privileged mode
+|_Needed to prevent user-mode processes from executing privileged operations_
+
+|Base/bounds registers
+|_Need pair of register per CPU to support address translation and bound checks_
+
+|Ability to translate virtual address and check if within bounds
+|_Circuitry to do translation and check limits_
+
+|Privileged instruction(s) to update base/bounds
+|_OS must be able to set these values before letting a user program run_
+
+|Privileged instruction(s) to register exception handlers
+|OS must be able to tell hardware what code to run if exception occurs
+
+|Ability to raise exceptions
+|When processes try to access privileged instructions or out-of-bounds memory
+
+|===
+
+[frame=none]
+.Dynamic Relocation: Operating System Responsibilities
+|===
+|OS requirements|Notes
+
+|Memory management
+|_Need to allocate memory for new processes; Reclaim memory from terminated processes_
+
+|Base/bounds management
+|_Must set base/bounds properly upon context switch_
+
+|Exception handling
+|_Code to run when exception arise_
+
+|===

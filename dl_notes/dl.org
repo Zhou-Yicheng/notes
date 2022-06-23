@@ -1,0 +1,44 @@
+* Deep Learning
+
+** Math Basics
+
+** Deep Feedforward Networks
+
+These models are called *feedforward* because information flows through the
+function being evaluated from /x/, through the intermediate computations used to
+define /f/, and finally to the output /y/.
+
+Feedforward neural networks are called *networks* because they are typically
+represented by composing together many different functions. The model is
+associated with a /directed acyclic graph/ describing how the functions are composed
+together. Chain structures are the most commonly used structures of neural networks.
+
+These networks are called /neural/ because they are loosely inspired by neuroscience.
+We can think of the layer as consisting of many *units* that act in parallel,
+each representing a vector-to-scalar function. Each unit resembles a neuron in
+the sense that it receives input from many other units and computes its own
+activation value. The idea of using many layers of vector-valued representations
+is drawn from neuroscience.
+
+It is best to think of
+feedforward networks as function approximation machines that are designed to
+achieve statistical generalization rather than as models of brain function.
+
+*** Back-Propagation
+
+** Optimisation and Regularization
+
+** Convolutional Neural Network (CNN)
+
+** Recurrent Neural Network (RNN)
+
+** PCA and Auto-Encoders
+
+** Variational Auto-Encoder (VAE)
+
+** Generative Adversarial Network (GAN)
+
+** Adversarial Examples
+
+** Graph Neural Network (GNN)
+

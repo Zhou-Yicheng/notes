@@ -1,0 +1,15 @@
+= Beyond Physical Memory: Policies
+
+.THE CRUX: HOW TO DECIDE WHICH PAGE TO EVICT
+____
+How can the OS decide which page (or pages) to evict from memory?
+This decision is made by the replacement policy of the system, which usually follows some general principles (discussed below) but also includes certain tweaks to avoid corner-case behaviors.
+____
+
+
+
+.CRUX: HOW TO IMPLEMENT AN LRU REPLACEMENT POLICY
+____
+Given that it will be expensive to implement perfect LRU, can we approximate it in some way, and still obtain the desired behavior?
+____
+

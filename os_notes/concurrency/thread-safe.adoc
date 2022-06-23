@@ -1,0 +1,16 @@
+= Lock-based Concurrent Data Structures
+
+[CAUTION]
+.CRUX: HOW TO ADD LOCKS TO DATA STRUCTURES
+====
+When given a particular data structure, how should we add locks to it, in order to make it work correctly?
+Further, how do we add locks such that the data structure yields high performance, enabling many threads to access the structure at once, i.e., *concurrently*?
+====
+
+== Concurrent Counters
+
+== Concurrent Linked Lists
+
+== Concurrent Queues
+
+== Concurrent Hash Table

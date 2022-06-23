@@ -1,0 +1,14 @@
+= Interlude: Files and Directories
+
+file:: a linear array of bytes
+
+directory:: maps the user-readable name to the low-level name
+
+each file and directory has a *inode number*
+
+== Creating Files
+
+image:2022-05-20T05-14-37-555Z.png[] 
+
+== Reading and Writing Files
+
