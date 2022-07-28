@@ -1,0 +1,188 @@
+* Lock
+
+** 自增锁 (AUTO-INC Lock)
+    An =AUTO-INC= lock is a special table-level lock taken by transactions
+inserting into tables with =AUTO_INCREMENT= columns. In the simplest case,
+if one transaction is inserting values into the table, any other transactions
+must wait to do their own inserts into *that* table, so that rows inserted
+by the first transaction receive consecutive primary key values.
+
+- "INSERT-like" statements
+  All statements that generate new rows in a table, including =INSERT=, 
+=INSERT ... SELECT=, =REPLACE=, =REPLACE ... SELECT= and =LOAD DATA=.
+Includes "simple-inserts", "bulk-inserts", and "mixed-mode" inserts.
+
+- "Simple inserts"
+  Statements for which the number of rows to be inserted can be determined
+in advance. This includes single-row and multiple-row =INSERT= and =REPLACE=
+statements that do not have a nested subquery, but not =INSERT ... ON DUPLICATE KEY UPDATE=.
+
+- "Bulk inserts"
+  Statements for which the number of rows to be inserted is *not* known
+in advance. This include =INSERT ... SELECT=, =REPLACE ... SELECT=, and
+=LOAD DATA= statements, but not plain =INSERT=. =InnoDB= assign new values
+for the =AUTO_INCREMENT= column one at a time as each row is processed.
+
+- "Mixed-mode inserts"
+  These are "simple insert" statements that specify the auto-increment
+value for some (but not all) of the new rows. Another type of "mixed-mode
+insert" is =INSERT ... ON DUPLICATE KEY UPDATE=, which in the worst case
+is in effect an =INSERT= followed by a =UPDATE=, where the allocated value
+for the =AUTO_INCREMENT= column may or may not be used during the update phase.
+
+#+BEGIN_SRC sql
+SHOW variables LIKE '%innodb_autonic_lock_mode%';
+#+END_SRC
+
+- 0 :: "traditional" lock mode
+  In this lock mode, *all* "INSERT-like" statements obtain a special table-level
+=AUTO-INC= lock for inserts into table with =AUTO_INCREMENT= columns. This lock
+is normally held to the end of the statement to ensure that auto-increment
+values are assigned in a predictable and repeatable order for a given sequence
+of _INSERT_ statements, and to ensure that auto-increment values assigned
+by any given statement are consecutive.
+
+safe for use with statement-based replication
+
+- 1 :: "consecutive" lock mode
+  In this mode, "bulk inserts" use the special table-level =AUTO-INC= lock
+and hold it until the end of the statement. This applies to all =INSERT ... SELECT=,
+=REPLACE ... SELECT=, and =LOAD DATA= statements. Only one statement holding
+the =AUTO-INC= lock can execute at a time.
+
+"Simple inserts" avoid table-level =AUTO-INC= locks by obtaining the required
+number of auto-increment values under the control of a mutex that is only held
+for the duration of the allocation process, _not_ until the statement completes.
+No table-level =AUTO-INC= lock is used unless an =AUTO-INC= lock is held by
+another transaction. If another transaction holds an =AUTO-INC= lock, a "simple
+insert" waits for the =AUTO-INC= lock.
+
+The exception is for "mixed-mode inserts", where the user provide explicit values
+for an =AUTO_INCREMENT= column for some, but not all, rows in a multiple-row
+"simple insert". For such inserts, =InnoDB= allocates more auto-increment values
+than the number of rows to be inserted. ?
+  
+still *safe* for statement-based replication
+
+- 2 :: "interleaved" lock mode
+  In this lock mode, no "INSERT-like" statements use the table-level =AUTO-INC=
+lock, and multiple statements can execute at the same time.
+
+_not safe_ when using statement-based replication or recovery scenarios when
+SQL are replayed from binary log.
+
+** TODO 共享锁和排他锁
+
+** TODO InnoDB MVCC (multi-version concurrency control)
+   
+** 意向锁 (Intention Lock)
+
+- Intention Shared Lock (IS)
+  事务要获取某些行的 S 锁，必须先获得表的 IS 锁。
+
+- Intention Exclusive Lock (IX)
+  事务要获取某些行的 X 锁，必须先获得表的 IX 锁。
+  
+** 记录锁 (Record Locks)
+   A record lock is a lock on an index record. For example, ~SELECT c1 FROM t
+WHERE c1 = 10 FOR UPDATE;~ prevents any other transaction from inserting,
+updating, or deleting rows where the value of =t.c1= is =10=.
+
+Record locks always lock index records, even if a table is defined with no
+indexes. For such cases, =InnoDB= creates a hidden clustered index and uses
+this index for record locking.
+
+** 间隙锁 (Gap Lock)
+   A gap lock is a lock on a gap between index records, or a lock on the gap
+before the first or after the last index record. For example, ~SELECT c1 FROM t
+WHERE c1 BETWEEN 10 AND 20 FOR UPDATE;~ prevents other transactions from
+inserting a value of =15= into column =t.c1=, whether or not there was
+already any such value in the column, because the gaps between all values
+in the range are locked. A gap might span a single index value, multiple
+index values, or even be empty.
+
+Gap locking is not needed for statements that lock rows using a unique index
+to search for a unique row. (This does not include the case that the search
+condition includes only some columns of a multiple-column unique index) For
+example, if the =id= column has a unique index, the following statement uses
+only an index-record lock for the row having =id= value 100 and it does not
+matter whether other sessions insert rows in the preceding gap:
+~SELECT * FROM child WHERE id = 100;~
+If =id= is not indexed or has a non-unique index, the statement *does* lock
+the preceding gap. Gap locks' only purpose is to prevent other transactions
+from inserting to the gap. Gap locks can co-exist.
+
+** 临键锁 (Next-Key Lock)
+   A next-key lock is a combination of a record lock and a gap lock on the
+gap *before* the index record.
+=InnoDB= performs row-level locking in such a way that when it searches or
+scans a table index, it sets shared or exclusive locks on the index records
+it encounters. The row-level locks are actually index-record locks. A next-
+key lock is an index-record lock plus a gap lock on the gap preceding the 
+index record. If one session has a shared or exclusive lock on record =R=
+in an index, another session cannot insert a new index record in the gap
+immediately before =R= in the index order.
+
+#+BEGIN_SRC
+(negative infinity, 10]
+(10, 11]
+(11, 13]
+(13, 20]
+(20, positive infinity)
+#+END_SRC
+
+Suppose that an index contains the values 10, 11, 13, 20. The possible next-
+key locks for this index cover the above intervals. For the last interval,
+the next-key lock locks the gap above the largest value in the index and the
+"supermum" pseudo-record having a value higher than any value actually in the
+index. In _REPEATABLE READ_ transaction isolation level, =InnoDB= uses next-
+key locks for searches and index scans, which prevents phantom rows.
+
+If a _SELECT_ is executed twice, but returns a row the second time that was
+not returned the first time, the row is a "phantom" row. To prevent phantoms,
+=InnoDB= uses an algorithm called next-key locking that combines index-row
+locking with gap locking.
+
+When =InnoDB= scans an index, it can also lock the gap *after* the last record
+in the index. In _READ COMMITTED_ transaction isolation level, gap locking
+is disabled, which may cause phantom problems because other sessions can
+insert new rows into the gaps.
+
+** 插入意向锁 (Insert Intention Lock)
+   An insert intention lock is a type of gap lock set by _INSERT_ operations
+prior to row insertion. This lock signals the intent to insert in such a
+way that multiple transactions inserting into the same index gap need not
+wait for each other if they are not inserting at the same position.
+
+
+
+* Indexes
+  Each =InnoDB= table has a special index called the clustered index that
+stores row data. Typically, the clustered index is synonymous with the
+primary key.
+- When you define a =PRIMARY KEY= on a table, =InnoDB= uses it as the 
+clustered index. A primary key should be defined for each table. If
+there is no logical unique and non-null column or set of columns to
+use as the primary key, add an auto-increment column.
+- If you do not define a =PRIMARY KEY= for a table, =InnoDB= uses the
+first =UNIQUE= index with all key columns defined as =NOT NULL= as the
+clustered index.  
+- If a table has no =PRIMARY KEY= or suitable =UNIQUE= index, =InnoDB=
+generates a hidden clustered index named =GEN_CLUST_INDEX= on a synthetic
+column that contains row ID values. The rows are ordered by the row ID
+that =InnoDB= assigns. The row ID is a 6-byte field that increases monotonically
+as new rows are inserted.
+**How the Clustered Index Speeds Up Queries**
+Accessing a row through the clustered is fast because the index search
+leads *directly* to the page that contains the row data. If a table is large,
+the clustered index architecture saves a disk I/O operation when compared to
+storage organizations that store row data using a different page from the
+index record.
+**How Secondary Indexes Relate to the Clustered Index**
+Indexes other than the clustered index are known as secondary indexes. In
+=InnoDB=, each record in a secondary index contains the primary key columns
+for the row, as well as the columns specified for the secondary index.
+=InnoDB= uses this primary key value to search for the row in the clustered
+index.
+**kldsafjklsdfj**
++kjdlff+ ~lskdfs~ /afljsdf/ _sdakfj_

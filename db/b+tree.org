@@ -1,0 +1,101 @@
+* B Tree
+** Definition
+   1. Every node has at most /m/ children
+   2. Every internal node has at least [m/2] children
+   3. Every non-leaf node has at least two children
+   4. All leaves appear on the same level and carry no information
+   5. A non-leaf node with k children contains k-1 keys
+**Internal nodes**
+Internal nodes (inner nodes) are all nodes except for leaf nodes ant the
+root node. They are usually represented as an ordered set of elements and
+child pointers. Every internal node contains a *maximum* of /U/ children
+and a *minimum* of /L/ children. 
+
+**Root node**
+The root node's number of children has the same upper limit as internal
+nodes, but has no lower limit.
+
+**Leaf nodes**
+In Knuth's terminology, leaf nodes do not carry any information.
+
+** Description
+   In B-trees, internal nodes can have a variable number of child nodes
+within some pre-defined range. In order to maintain the pre-defined range,
+internal nodes may be joined or split. For example, in a 2-3 tree, each
+internal node may have only 2 or 3 child nodes.
+
+Each internal node of a B-tree contains a number of keys. The keys act as
+separation values which divide its subtrees. Usually, the number of keys
+is chosen to vary between /d/ and /2d/, where d is the minimum number of
+keys, and /d+1/ is the minimum degree of branching factor of the tree.
+In practice, the keys take up the most space in a node. 
+
+In a 2-3 B-tree, the internal nodes will store either one key or two keys.
+A B-tree is sometimes described with the parameters /(d+1)-(2d+1)/ or
+simply with the highest branching order, /(2d+1)/
+
+Depth only increases when the root is split, and depth only decreases when
+the root has two children of /d/ and /d-1/ keys.
+* B+Tree
+  A B+ tree can be viewed a B-tree in which each node contains *only* keys,
+and to which an additional level is added at the bottom with linked leaves.
+
+- Individual nodes will have either /keys/ or /children/, but never both
+- The /order/ or /branching factor/ $b$ of a B+ tree measures the capacity
+of internal nodes
+- Internal nodes have no keys, but will always have nonzero children. The
+/actual/ number of childrem $m$ for a given internal node is constrained
+such that $\lceil b/2 \rceil \leq m \leq b$.
+- Leaf nodes contain the elements of the B+ tree as *keys*. The number
+of keys $n$ contained in a given leaf node must satisfy $\lceil b/2 \rceil \leq n \leq b$.
+- The root is typically considered to be a special type of internal node
+which may have as few as a 2 children. This translates to $2 \leq m \leq b$.
+- In the situation where a B+ tree is empty or contains exactly 1 node,
+the root instead becomes the single leaf. In this case, the number of keys
+$n$ must satisfy $0 \leq n \leq b-1$.
+
+** Intervals in internal nodes
+   By definition, each value contained within the B+ tree is a key contained
+in exactly one leaf node. Each key is required to be directly comparable
+with every other key, which forms a total order. This enables each leaf node
+to keep all of its keys sorted at all times, which then enables each internal
+node to construct an ordered collection of intervals.
+
+For this recursive interval information to be retained, internal nodes must
+additionally contain $m-1$ copies of keys $l_i$ for $i \in [1, m-1]$ representing
+the *least element* within the interval covered by the child with index $i$
+
+** Algorithms
+   
+#+BEGIN_SRC pseudo
+function search(k, root) is
+    let leaf = leaf_search(k, root)
+    for key in leaf.keys():
+        if k = key:
+	    return true
+	    return false
+#+END_SRC
+
+#+BEGIN_SRC pseudo
+function leaf_search(k, node) is
+    if node is a leaf:
+        return node
+    let p = node.children()
+    let l = node.left_sided_intervals()
+    assert |p| = |l| + 1
+    let m = p.len()
+    for i from 1 to m - 1:
+        if k <= l[i]:
+	    return leaf_search(k, p[i])
+    return leaf_search(k, p[m])
+#+END_SRC
+
++ crash recovery
+  The cleanup activities that occur when MySQL is started again after a */crash/*.
+For =InnoDB= tables, changes from incomplete transactions are replayed using data
+from the */redo log/*. Changes that were */committed/* before the crash, but not
+yet written into the */data files/*, are reconstructed from the */doublewrite buffer/*
+When the database is shut down normally, this type of activity is performed during
+shutdown by the */purge/* operation.
+
+During normal operation, 
